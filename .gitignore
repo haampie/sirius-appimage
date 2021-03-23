@@ -1,2 +1,4 @@
 spack.lock
 .spack*
+runtime
+sirius.app
