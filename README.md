@@ -34,7 +34,6 @@ maximum number of OMP threads : 16
 
 
 $ ./sirius.app atom
-$ ./sirius.app atom
 SIRIUS 6.5.7, git hash: https://api.github.com/repos/electronic-structure/SIRIUS/git/ref/tags/v6.5.7
 
 Atom (L)APW+lo basis generation.
@@ -51,3 +50,46 @@ Options:
   --xml      xml output for Exciting code
   --rel      use scalar-relativistic solver
 ```
+
+## Running on piz daint
+
+For Piz Daint I've modified the `sirius/spack.yaml` a bit so that it links against system libmpi.so (`^cray-mpich` that is):
+
+```
+daint103 $ ./build.sh
+...
+
+daint103 $ du -sh sirius.app # binary size (includes compressed squashfs)
+26M	sirius.app
+
+daint103 $ ./sirius.app --appimage-extract # runtime allows you to extract
+squashfs-root/AppRun
+squashfs-root/usr
+squashfs-root/usr/bin
+squashfs-root/usr/bin/atom
+squashfs-root/usr/bin/sirius.scf
+squashfs-root/usr/lib
+squashfs-root/usr/lib/libAtpSigHandler.so.1
+squashfs-root/usr/lib/libAtpSigHandler.so.1.0.1
+squashfs-root/usr/lib/libcuda.so.1
+squashfs-root/usr/lib/libcuda.so.450.51.05
+...
+
+daint103 $ du -sh squashfs-root # uncompressed size
+70M	squashfs-root/
+
+daint103 $ srun ... -Cmc -N1 -n2 -c2 --time=00:01:00 ./sirius.app sirius.scf # run sirius.scf with cray mpi
+srun: job 30079568 queued and waiting for resources
+srun: job 30079568 has been allocated resources
+SIRIUS 6.5.7, git hash: https://api.github.com/repos/electronic-structure/SIRIUS/git/ref/tags/v6.5.7
+input file does not exist
+===========================================================================================================
+                            #         Total          %   Parent %        Median           Min           Max
+-----------------------------------------------------------------------------------------------------------
+sirius                      1       2.30 ms     100.00     100.00       2.30 ms       2.30 ms       2.30 ms
+ |- sirius::initialize      1       1.40 ms      60.83      60.83       1.40 ms       1.40 ms       1.40 ms
+ |- sirius::finalize        1     333.28 us      14.52      14.52     333.28 us     333.28 us     333.28 us
+
+===========================================================================================================
+```
+
